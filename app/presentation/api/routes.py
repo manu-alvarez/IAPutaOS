@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from app.core.config import settings, APP_PREFIX
+from app.core.api_auth import matches_api_key
 from app.application.use_cases.chat_use_case import ChatUseCase
 from app.infrastructure.llm.groq_adapter import GroqAdapter
 from app.infrastructure.audio.tts_stt_adapter import GroqEdgeAudioAdapter
@@ -29,13 +30,11 @@ def get_audio_adapter() -> GroqEdgeAudioAdapter:
 def _verify_api_key(request: Request):
     expected = settings.IAPUTA_API_KEY
     if not expected:
-        return
-    
-    # Nginx and some browsers lowercase headers. We should check both.
-    incoming_key = request.headers.get("x-api-key") or request.headers.get("X-API-KEY")
-    
-    if incoming_key != expected:
-        logger.warning(f"AUTH FAILED: Expected {expected}, got {incoming_key}")
+        raise HTTPException(status_code=503, detail="Autenticación de API no configurada.")
+
+    # Starlette request headers are case-insensitive. Never log credentials.
+    if not matches_api_key(expected, request.headers.get("x-api-key")):
+        logger.warning("API request rejected: missing or invalid credentials")
         raise HTTPException(status_code=401, detail="API key inválida o ausente.")
 
 class TextCommandRequest(BaseModel):
@@ -67,7 +66,7 @@ async def voice_command_endpoint(request: Request, audio_file: UploadFile = File
         raise
     except Exception as e:
         logger.exception("Error in voice-command")
-        return JSONResponse(status_code=500, content={"transcript": "Error de audio", "error": str(e), "emotion": "error"})
+        return JSONResponse(status_code=500, content={"transcript": "Error de audio", "error": "Error interno", "emotion": "error"})
 
 @router.post("/api/text-command", response_model=AIResponse)
 async def text_command_endpoint(request: Request, body: TextCommandRequest, chat_usecase: ChatUseCase = Depends(get_chat_usecase)):
@@ -97,7 +96,7 @@ async def vision_analyze_endpoint(request: Request, body: VisionAnalyzeRequest, 
         raise
     except Exception as e:
         logger.exception("Error in vision-analyze")
-        return JSONResponse(status_code=500, content={"response": f"Error visión: {e}", "emotion": "error"})
+        return JSONResponse(status_code=500, content={"response": "Error interno de visión", "emotion": "error"})
 
 @router.post("/api/clear-memory")
 async def clear_memory_endpoint(request: Request):
