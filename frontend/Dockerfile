@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalamos módulos de Node limpios
-RUN npm install
+RUN npm ci
 
 # Copiamos código y construimos la web SPA
 COPY . .
@@ -17,7 +17,7 @@ RUN npm run build
 FROM nginx:alpine
 
 # Copiamos configuración de enrutamiento estático (SPA fallback a index.html)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 # Copiamos la build estática compilada desde la etapa anterior
 COPY --from=builder /app/dist /usr/share/nginx/html
