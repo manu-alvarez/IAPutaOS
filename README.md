@@ -1,48 +1,43 @@
-# IAPuta OS - Modular Deployment Guide
+# IAPuta OS — React + FastAPI
 
-Este proyecto ha sido refactorizado aplicando **Clean Architecture (Ports & Adapters)**, integrado con React/Vite/MUI M3 en el frontend, y dockerizado para su despliegue inmutable en **VPS Producción**.
+Aplicación web con frontend React/Vite y backend FastAPI. El repositorio incluye ahora un entorno local reproducible con Docker Compose; **no implica un despliegue en producción**.
 
-## Puertos de Acceso
-- **Frontend (HTTP)**: http://localhost:8080
-- **Frontend (HTTPS)**: https://localhost:8443 (requiere certificados)
-- **Backend API**: http://localhost:8000
+## Inicio local
 
-## Requisitos Previos (VPS)
-- Docker y Docker Compose instalados.
-- Un servidor VPS con Linux (Ubuntu Server recomendado).
-- Git.
+Requisitos: Docker con Compose y credenciales de los proveedores que se vayan a utilizar.
 
-## Pasos para Despliegue Automatizado
-1. **Clonar el repositorio**:
-   ```bash
-   git clone <URL_DEL_REPO> iaputa-os
-   cd iaputa-os
-   ```
+```bash
+git clone https://github.com/manu-alvarez/IAPutaOS.git
+cd IAPutaOS
+cp .env.example .env
+# Rellenar GROQ_API_KEY e IAPUTA_API_KEY con valores privados y únicos.
+docker compose up --build -d
+docker compose ps
+```
 
-2. **Configurar Entorno**:
-   El proyecto es 100% seguro (secrets expurgados). Necesitas crear el `.env`:
-   ```bash
-   cp .env.example .env
-   # Edita el archivo con nano o vim e inserta tus Tokens reales de Groq, Tavily, etc.
-   nano .env
-   ```
+- Interfaz local: http://127.0.0.1:8080
+- Salud del backend: http://127.0.0.1:8080/health
+- El backend no publica su puerto en el anfitrión; solo se alcanza desde el proxy Nginx de la red privada del proyecto.
+- La interfaz se enlaza exclusivamente a `127.0.0.1`; el acceso remoto debe configurarse aparte mediante un proxy HTTPS con autenticación.
 
-3. **Caché y Permisos de Github**:
-   Comprueba que los entornos Python no están corrompiendo la carga local, usando los hooks configurados de `.gitignore` los cuales excluyen todas aquellas claves y contraseñas tuyas.
+## Seguridad
 
-4. **Levantar el Servicio**:
-   Gracias al estándar de **Twelve-Factor App**, el despliegue es en un comando:
-   ```bash
-   docker-compose up -d --build
-   ```
+- Las claves de servicios se configuran en `.env` y no se incluyen en el bundle JavaScript.
+- Nginx incorpora `X-API-Key` a las peticiones al backend desde el contenedor, no desde el navegador.
+- El backend rechaza todas las operaciones protegidas si `IAPUTA_API_KEY` no está configurada.
+- Las credenciales utilizadas anteriormente en archivos frontend versionados pueden seguir presentes en el historial Git. Retirar el valor del árbol actual **no invalida** una credencial ya expuesta.
+- El proxy Nginx no aporta autenticación de usuario final: **no publicar su puerto directamente en Internet**. Para uso remoto, colocar un control de acceso perimetral antes del proxy.
 
-5. **Acceder a la Aplicación**:
-   - **Frontend**: Abre http://localhost:8080 en tu navegador
-   - **API Health**: http://localhost:8000/health
-   - **Logs del Backend**:
-   ```bash
-   docker-compose logs -f iaputa-backend
-   ```
+## Pruebas
 
-## Pipeline CI/CD Actual
-Si usas Github, los tests de unidad (`pytest` para domain/use cases) y el lint correrán automáticamente cada vez que empujes a main, previniendo fallos en producción.
+```bash
+python -m pytest tests/ -q
+cd frontend && npm ci && npm run build
+docker compose config -q
+```
+
+La CI ejecuta las comprobaciones que no requieren conexiones reales a proveedores. Las funciones Groq, visión, audio y automatizaciones externas requieren pruebas de aceptación adicionales con credenciales propias.
+
+## Estado
+
+Los endpoints básicos, la interfaz y el empaquetado están implementados en este repositorio. Los servicios externos y el acceso remoto de producción **no se consideran verificados** por una compilación correcta.
