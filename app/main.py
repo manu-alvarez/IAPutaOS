@@ -39,13 +39,18 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="IAPuta OS Core API", lifespan=lifespan)
 
-# CORS DEFINITIVE FIX
+# Explicit CORS allow-list: never combine wildcard origins with credentials.
+allowed_origins = [
+    origin.strip()
+    for origin in settings.CORS_ORIGINS.split(",")
+    if origin.strip() and origin.strip() != "*"
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=allowed_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "X-API-Key"],
 )
 
 app.include_router(router)
