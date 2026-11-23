@@ -29,7 +29,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Default CORS origins (can be overridden by environment variable)
-ENV CORS_ORIGINS="*"
+ENV CORS_ORIGINS="http://localhost:8080,http://127.0.0.1:8080"
 
 # Expose FastAPI port
 EXPOSE 8000
