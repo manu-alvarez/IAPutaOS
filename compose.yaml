@@ -1,0 +1,38 @@
+name: iaputa-os
+
+services:
+  iaputa-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY:?Set GROQ_API_KEY in .env}
+      IAPUTA_API_KEY: ${IAPUTA_API_KEY:?Set IAPUTA_API_KEY in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      RUNNING_IN_DOCKER: "true"
+    env_file:
+      - .env
+    expose:
+      - "8000"
+    restart: unless-stopped
+    networks:
+      - app-internal
+
+  iaputa-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      IAPUTA_API_KEY: ${IAPUTA_API_KEY:?Set IAPUTA_API_KEY in .env}
+      NGINX_ENVSUBST_FILTER: "^IAPUTA_API_KEY$"
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - iaputa-backend
+    restart: unless-stopped
+    networks:
+      - app-internal
+
+networks:
+  app-internal:
+    internal: true
