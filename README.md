@@ -41,3 +41,7 @@ La CI ejecuta las comprobaciones que no requieren conexiones reales a proveedore
 ## Estado
 
 Los endpoints básicos, la interfaz y el empaquetado están implementados en este repositorio. Los servicios externos y el acceso remoto de producción **no se consideran verificados** por una compilación correcta.
+
+### Persistent memory
+
+The local Compose topology uses the `iaputa-memory` named volume at `/app/data`. Before replacing an existing deployment, follow [the verified backup and migration procedure](docs/MEMORY-PERSISTENCE.md). Do not publish the local frontend proxy without perimeter authentication. Existing PM2 installations are not automatically migrated by this Compose configuration.

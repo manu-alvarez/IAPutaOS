@@ -10,8 +10,11 @@ services:
       IAPUTA_API_KEY: ${IAPUTA_API_KEY:?Set IAPUTA_API_KEY in .env}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
       RUNNING_IN_DOCKER: "true"
+      IAPUTA_MEMORY_DB_PATH: /app/data/iaputa_os_memory.db
     env_file:
       - .env
+    volumes:
+      - iaputa-memory:/app/data
     expose:
       - "8000"
     restart: unless-stopped
@@ -36,3 +39,6 @@ services:
 networks:
   app-internal:
     driver: bridge
+
+volumes:
+  iaputa-memory:
