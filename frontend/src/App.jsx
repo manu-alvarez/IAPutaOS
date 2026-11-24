@@ -5,7 +5,6 @@ import './index.css';
 
 // API Configuration from environment variables
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 import { 
   IconEye, IconCamera, IconMonitor, IconGlobe, 
@@ -101,7 +100,7 @@ function App() {
     try {
       const options = { 
         method: 'POST', 
-        headers: { 'x-api-key': API_KEY }, 
+        headers: {}, 
         body: payload 
       };
       if (isJson) options.headers['Content-Type'] = 'application/json';
@@ -246,7 +245,7 @@ function App() {
     try {
       const res = await fetch(`${API_BASE_URL}/vision-analyze`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: base64Image, source })
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -282,7 +281,7 @@ function App() {
     try {
       await fetch(`${API_BASE_URL}/clear-memory`, { 
         method: 'POST',
-        headers: { 'x-api-key': API_KEY }
+        headers: {}
       });
       setTranscript({ type: 'system', text: '◈ MEMORIA PURGADA.' });
     } catch (err) {

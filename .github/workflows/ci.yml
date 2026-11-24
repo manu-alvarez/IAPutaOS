@@ -41,3 +41,23 @@ jobs:
       run: npm install --legacy-peer-deps
     - name: Build React App
       run: npm run build
+
+  security-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Docker Compose config without production credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'GROQ_API_KEY=ci-dummy\nIAPUTA_API_KEY=ci-dummy\n' > .env
+          docker compose config --quiet
+          rm .env
+      - name: Reject browser-exposed API credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -R -E 'VITE_API_KEY|iaputa_sk_' frontend/src frontend/.env.production
+          test -f frontend/nginx.conf
+          grep -q 'X-API-Key' frontend/nginx.conf
